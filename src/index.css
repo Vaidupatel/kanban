@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/* mainBackgroundColor: "#0D1117" */
+/* columnBackgroundColor: "#161C22" */
+
+:root {
+  background: #0d1117;
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar:horizontal {
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-rose-900 rounded-xl;
+}
