@@ -1,8 +1,8 @@
-import { useSortable } from "@dnd-kit/sortable";
+import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import TrashIcon from "../Icons/TrashIcon";
 import { Column, Id, Task } from "../types";
 import { CSS } from "@dnd-kit/utilities";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import PlusIcon from "../Icons/PlusIcon";
 import TaskCard from "./TaskCard";
 
@@ -12,12 +12,24 @@ interface Props {
   updateColumn: (id: Id, title: string) => void;
   createTask: (id: Id) => void;
   deleteTask: (id: Id) => void;
+  updateTask: (id: Id, content: string) => void;
   tasks: Task[];
 }
 const ColumnContainer = (props: Props) => {
-  const { column, deleteColumn, updateColumn, createTask, tasks, deleteTask } =
-    props;
+  const {
+    column,
+    deleteColumn,
+    updateColumn,
+    createTask,
+    tasks,
+    deleteTask,
+    updateTask,
+  } = props;
   const [editMode, setEditMode] = useState(false);
+  const TasksIds = useMemo(() => {
+    return tasks.map((task) => task.id);
+  }, [tasks]);
+
   const nodeRef = useRef<HTMLDivElement | null>(null); // Store actual DOM element
   const {
     setNodeRef,
@@ -46,7 +58,7 @@ const ColumnContainer = (props: Props) => {
         style={style}
         className="bg-[#161C22] opacity-40 border-2  w-[350px] h-[500px] rounded-md flex flex-col"
       >
-        hello
+        {/* hello */}
       </div>
     );
   }
@@ -96,9 +108,16 @@ const ColumnContainer = (props: Props) => {
       </div>
       {/* Column task container */}
       <div className="flex flex-grow flex-col gap-4 p2 overflow-x-hidden overflow-y-auto">
-        {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} deleteTask={deleteTask} />
-        ))}
+        <SortableContext items={TasksIds}>
+          {tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              deleteTask={deleteTask}
+              updateTask={updateTask}
+            />
+          ))}
+        </SortableContext>
       </div>
       {/* Footer */}
       <button

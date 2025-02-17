@@ -1,4 +1,6 @@
-export type Id = string;
+import { UniqueIdentifier } from "@dnd-kit/core";
+
+export type Id = UniqueIdentifier;
 export type Column = {
   id: Id;
   title: string;
