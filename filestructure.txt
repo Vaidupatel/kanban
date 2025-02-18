@@ -4,8 +4,6 @@
 |-- index.html
 |-- package-lock.json
 |-- package.json
-|-- public
-    |-- vite.svg
 |-- src
     |-- App.css
     |-- App.tsx

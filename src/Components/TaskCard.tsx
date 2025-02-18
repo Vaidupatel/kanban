@@ -7,8 +7,9 @@ type Props = {
   task: Task;
   deleteTask: (id: Id) => void;
   updateTask: (id: Id, content: string) => void;
+  isBoardView: boolean;
 };
-const TaskCard = ({ task, deleteTask, updateTask }: Props) => {
+const TaskCard = ({ task, deleteTask, updateTask, isBoardView }: Props) => {
   const [mouseIsOver, setMouseIsOver] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
@@ -37,7 +38,9 @@ const TaskCard = ({ task, deleteTask, updateTask }: Props) => {
       <div
         ref={setNodeRef}
         style={style}
-        className="bg-[#0D1117] opacity-50 p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl  border-2 border-rose-500 cursor-grab relative task"
+        className={`bg-[#0D1117] p-2.5  ${
+          isBoardView ? `h-[100px] min-h-[100px]` : `h-[3rem] w-[95vw]`
+        }  items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative task`}
       />
     );
   }
@@ -74,9 +77,12 @@ const TaskCard = ({ task, deleteTask, updateTask }: Props) => {
       </div>
     );
   }
+
   return (
     <div
-      className="bg-[#0D1117] p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative task"
+      className={`bg-[#0D1117] p-2.5  ${
+        isBoardView ? `h-[100px] min-h-[100px]` : `h-[3rem] w-[95vw]`
+      }  items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative task`}
       onMouseEnter={() => setMouseIsOver(true)}
       onMouseLeave={() => setMouseIsOver(false)}
       ref={setNodeRef}

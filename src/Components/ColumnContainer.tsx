@@ -1,8 +1,8 @@
-import { SortableContext, useSortable } from "@dnd-kit/sortable";
-import TrashIcon from "../Icons/TrashIcon";
-import { Column, Id, Task } from "../types";
-import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useRef, useState } from "react";
+import { SortableContext, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Column, Id, Task } from "../types";
+import TrashIcon from "../Icons/TrashIcon";
 import PlusIcon from "../Icons/PlusIcon";
 import TaskCard from "./TaskCard";
 
@@ -13,6 +13,7 @@ interface Props {
   createTask: (id: Id) => void;
   deleteTask: (id: Id) => void;
   updateTask: (id: Id, content: string) => void;
+  isBoardView: boolean;
   tasks: Task[];
 }
 const ColumnContainer = (props: Props) => {
@@ -24,6 +25,7 @@ const ColumnContainer = (props: Props) => {
     tasks,
     deleteTask,
     updateTask,
+    isBoardView,
   } = props;
   const [editMode, setEditMode] = useState(false);
   const TasksIds = useMemo(() => {
@@ -51,28 +53,38 @@ const ColumnContainer = (props: Props) => {
     transition,
     transform: CSS.Transform.toString(transform),
   };
+
   if (isDragging) {
     return (
       <div
         ref={setNodeRef}
+        // {...attributes}
+        // {...listeners}
         style={style}
-        className="bg-[#161C22] opacity-40 border-2  w-[350px] h-[500px] rounded-md flex flex-col"
-      >
-        {/* hello */}
-      </div>
+        className={`bg-[#161C22] 
+          ${
+            isBoardView ? `min-w-[350px] w-[350px] h-[500px]` : `w-[95vw] h-[3rem]`
+          } rounded-md`}
+      />
     );
   }
-
   return (
     <div
       ref={setNodeRef}
       style={style}
+      id={column.id.toString()}
       {...attributes}
       {...listeners}
-      className="bg-[#161C22] w-[350px] h-[500px] rounded-md flex flex-col"
+      data-id={column.id}
+      className={`bg-[#161C22] 
+        ${
+          isBoardView ? `min-w-[350px] w-[350px] h-[500px]` : `w-[95vw] h-fit`
+        } rounded-md flex flex-col`}
     >
       {/* Column title */}
-      <div className=" bg-[#0D1117] text-md h-[60px] cursor-grab rounded-md rounded-b-none p-3 font-bold border-[#161C22] border-4 flex items-center justify-between">
+      <div
+        className={` bg-[#0D1117] text-md h-[60px] cursor-grab rounded-md rounded-b-none p-3 font-bold border-[#161C22] border-4 flex items-center justify-between`}
+      >
         <div
           className="flex gap-2"
           ref={nodeRef}
@@ -115,6 +127,7 @@ const ColumnContainer = (props: Props) => {
               task={task}
               deleteTask={deleteTask}
               updateTask={updateTask}
+              isBoardView={isBoardView}
             />
           ))}
         </SortableContext>

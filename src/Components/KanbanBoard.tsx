@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
-import PlusIcon from "../Icons/PlusIcon";
-import { Column, Id, Task } from "../types";
-import ColumnContainer from "./ColumnContainer";
+import { arrayMove, SortableContext } from "@dnd-kit/sortable";
 import {
   DndContext,
   DragEndEvent,
@@ -12,15 +10,20 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { arrayMove, SortableContext } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
+import PlusIcon from "../Icons/PlusIcon";
+import { Column, Id, Task } from "../types";
+import ColumnContainer from "./ColumnContainer";
 import TaskCard from "./TaskCard";
+
 const KanbanBoard = () => {
   const [columns, setColumns] = useState<Column[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
 
+  const [isBoardView, setIsBoardView] = useState<boolean>(false);
   const [activeColumn, setActiveColumn] = useState<Column | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+
   const columnsId = useMemo(() => {
     return columns.map((col) => col.id);
   }, [columns]);
@@ -79,7 +82,6 @@ const KanbanBoard = () => {
     return Math.floor(Math.random() * 10001);
   };
   const onDragstart = (event: DragStartEvent) => {
-    // console.log("Drag start ", event);
     if (event.active.data.current?.type === "Column") {
       setActiveColumn(event.active.data.current.column);
       return;
@@ -94,6 +96,11 @@ const KanbanBoard = () => {
     if (!over) return;
     const activeId = active.id;
     const overId = over.id;
+    if (over) {
+      console.log("Currently over droppable:", over.id);
+      const div = document.getElementById(over.id.toString());
+      console.log(div);
+    }
     if (activeId === overId) return;
 
     const isActiveATask = active.data.current?.type === "Task";
@@ -141,65 +148,84 @@ const KanbanBoard = () => {
       return arrayMove(columns, activeColumnIndex, overColumnIndex);
     });
   };
+
   return (
-    <div className="m-auto flex min-h-screen w-full items-center overflow-x-auto overflow-y-hidden px-[40px]">
-      <DndContext
-        onDragStart={onDragstart}
-        onDragEnd={onDragEnd}
-        onDragOver={onDragOver}
-        sensors={sensors}
-      >
-        <div className="m-auto flex">
-          <div className="flex gap-4">
-            <SortableContext items={columnsId}>
-              {columns.map((column) => (
+    <div className="">
+      <div className="w-fit flex mx-auto my-1 gap-1">
+        <button
+          onClick={() => setIsBoardView((prev) => !prev)}
+          type="button"
+          className="h-[60px] w-[350px] min-w-[350px]  cursor-pointer bg-[#0D1117] border-2 border-[#161C22] p-4 ring-rose-500 hover:ring-2 flex gap-2"
+        >
+          Chnage to {isBoardView ? "List" : "Board"} view
+        </button>
+        <button
+          onClick={createNewColumn}
+          className="h-[60px] w-[350px] min-w-[350px] cursor-pointer bg-[#0D1117] border-2 border-[#161C22] p-4 ring-rose-500 hover:ring-2 flex gap-2"
+        >
+          <PlusIcon />
+          Add Coulmn
+        </button>
+      </div>
+
+      <div className="flex w-full px-[40px]">
+        <DndContext
+          onDragStart={onDragstart}
+          onDragEnd={onDragEnd}
+          onDragOver={onDragOver}
+          sensors={sensors}
+        >
+          <div className={`m-auto flex overflow-x-auto w-screen `}>
+            <div
+              className={`flex ${isBoardView ? "flex-row" : "flex-col"} gap-4`}
+            >
+              <SortableContext items={columnsId}>
+                {columns.map((column) => (
+                  <ColumnContainer
+                    key={column.id}
+                    column={column}
+                    deleteColumn={deleteColumn}
+                    updateColumn={updateColumn}
+                    createTask={createTask}
+                    deleteTask={deleteTask}
+                    updateTask={updateTask}
+                    isBoardView={isBoardView}
+                    tasks={tasks.filter((task) => task.columnId === column.id)}
+                  />
+                  // <dragOverlay />
+                ))}
+              </SortableContext>
+            </div>
+          </div>
+          {createPortal(
+            <DragOverlay>
+              {activeColumn && (
                 <ColumnContainer
-                  key={column.id}
-                  column={column}
-                  deleteColumn={deleteColumn}
                   updateColumn={updateColumn}
+                  column={activeColumn}
+                  deleteColumn={deleteColumn}
                   createTask={createTask}
                   deleteTask={deleteTask}
                   updateTask={updateTask}
-                  tasks={tasks.filter((task) => task.columnId === column.id)}
+                  isBoardView={isBoardView}
+                  tasks={tasks.filter(
+                    (task) => task.columnId === activeColumn.id
+                  )}
                 />
-              ))}
-            </SortableContext>
-          </div>
-          <button
-            onClick={createNewColumn}
-            className="h-[60px] w-[350px] min-w-[350px] cursor-pointer bg-[#0D1117] border-2 border-[#161C22] p-4 ring-rose-500 hover:ring-2 flex gap-2"
-          >
-            <PlusIcon />
-            Add Coulmn
-          </button>
-        </div>
-        {createPortal(
-          <DragOverlay>
-            {activeColumn && (
-              <ColumnContainer
-                updateColumn={updateColumn}
-                column={activeColumn}
-                deleteColumn={deleteColumn}
-                createTask={createTask}
-                deleteTask={deleteTask}
-                updateTask={updateTask}
-                tasks={tasks.filter(
-                  (task) => task.columnId === activeColumn.id
-                )}
-              />
-            )}
-            {activeTask && (
-              <TaskCard
-                task={activeTask}
-                deleteTask={deleteTask}
-                updateTask={updateTask}
-              />
-            )}
-          </DragOverlay>,
-          document.body
-        )}
-      </DndContext>
+              )}
+              {activeTask && (
+                <TaskCard
+                  task={activeTask}
+                  deleteTask={deleteTask}
+                  updateTask={updateTask}
+                  isBoardView={isBoardView}
+                />
+              )}
+            </DragOverlay>,
+            document.body
+          )}
+        </DndContext>
+      </div>
     </div>
   );
 };
