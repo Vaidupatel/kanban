@@ -1,17 +1,18 @@
 import { useState } from "react";
 import TrashIcon from "../Icons/TrashIcon";
-import { Id, Task } from "../types";
+import { Task } from "../types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useKanban } from "../Context/KanbanContext";
 type Props = {
   task: Task;
-  deleteTask: (id: Id) => void;
-  updateTask: (id: Id, content: string) => void;
-  isBoardView: boolean;
 };
-const TaskCard = ({ task, deleteTask, updateTask, isBoardView }: Props) => {
+export const BoardTaskCard = ({ task }: Props) => {
+  const KanbanContext = useKanban();
+  const { updateTask, deleteTask } = KanbanContext;
   const [mouseIsOver, setMouseIsOver] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [editValue, setEditValue] = useState(task.description);
 
   const {
     setNodeRef,
@@ -38,9 +39,7 @@ const TaskCard = ({ task, deleteTask, updateTask, isBoardView }: Props) => {
       <div
         ref={setNodeRef}
         style={style}
-        className={`bg-[#0D1117] p-2.5  ${
-          isBoardView ? `h-[100px] min-h-[100px]` : `h-[3rem] w-[95vw]`
-        }  items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative task`}
+        className={`bg-[#0D1117] p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative task`}
       />
     );
   }
@@ -61,15 +60,17 @@ const TaskCard = ({ task, deleteTask, updateTask, isBoardView }: Props) => {
       >
         <textarea
           className="h-[90%] w-full resize-none border-none rounded bg-transparent text-white focus:outline-none"
-          value={task.content}
-          onChange={(e) => {
-            updateTask(task.id, e.target.value);
-          }}
           autoFocus
-          placeholder="Task content here"
-          onBlur={toggleEditMode}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          placeholder="Enter Task Description Here"
+          onBlur={() => {
+            updateTask(task.id, { description: editValue });
+            toggleEditMode();
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
+              updateTask(task.id, { description: editValue });
               toggleEditMode();
             }
           }}
@@ -80,9 +81,7 @@ const TaskCard = ({ task, deleteTask, updateTask, isBoardView }: Props) => {
 
   return (
     <div
-      className={`bg-[#0D1117] p-2.5  ${
-        isBoardView ? `h-[100px] min-h-[100px]` : `h-[3rem] w-[95vw]`
-      }  items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative task`}
+      className={`bg-[#0D1117] p-2.5 h-[100px] min-h-[100px] items-center flex text-left rounded-xl hover:ring-2 hover:ring-inset hover:ring-rose-500 cursor-grab relative task`}
       onMouseEnter={() => setMouseIsOver(true)}
       onMouseLeave={() => setMouseIsOver(false)}
       ref={setNodeRef}
@@ -92,7 +91,7 @@ const TaskCard = ({ task, deleteTask, updateTask, isBoardView }: Props) => {
       onClick={toggleEditMode}
     >
       <p className="my-auto h-[90%] w-[80%] overflow-y-auto overflow-x-hidden whitespace-pre-wrap ">
-        {task.content}
+        {task.description}
       </p>
       {mouseIsOver && (
         <button
@@ -106,4 +105,129 @@ const TaskCard = ({ task, deleteTask, updateTask, isBoardView }: Props) => {
   );
 };
 
-export default TaskCard;
+export const ListTaskCard = ({
+  task,
+  isDragOverlay = false,
+}: {
+  task: Task;
+  isDragOverlay?: boolean;
+}) => {
+  const [mouseIsOver, setMouseIsOver] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editValue, setEditValue] = useState(task.description);
+
+  const KanbanContext = useKanban();
+  const { updateTask, deleteTask } = KanbanContext;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: task.id,
+    data: { type: "Task", task },
+    disabled: editMode,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.1 : 1,
+    height: "48px",
+  };
+
+  const toggleEditMode = () => {
+    setEditMode((prev) => !prev);
+    setMouseIsOver(false);
+  };
+
+  const taskContent = (
+    <div
+      className="flex items-center gap-4 bg-gray-900 text-white p-2 rounded-md w-full"
+      onMouseEnter={() => setMouseIsOver(true)}
+      onMouseLeave={() => setMouseIsOver(false)}
+    >
+      {/* Task Description */}
+      <span className="flex-1 min-w-[150px]" onClick={toggleEditMode}>
+        {!editMode && task.description}
+        {editMode && (
+          <input
+            autoFocus
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            placeholder="Enter Task Description Here"
+            onBlur={() => {
+              updateTask(task.id, { description: editValue });
+              toggleEditMode();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                updateTask(task.id, { description: editValue });
+                toggleEditMode();
+              }
+            }}
+          />
+        )}
+      </span>
+
+      {/* Assignee */}
+      <span className="flex-1 min-w-[100px] text-center">
+        {task.assignee || <span className="opacity-50">-</span>}
+      </span>
+
+      {/* Due Date */}
+      <span className="flex-1 min-w-[80px] text-red-500 text-center">
+        {task.dueDate || <span className="opacity-50">-</span>}
+      </span>
+
+      {/* Priority */}
+      <span
+        className={`flex items-center justify-center px-2 py-1 rounded-md text-sm min-w-[80px] ${
+          task.priority === "high"
+            ? "bg-red-500"
+            : task.priority === "medium"
+            ? "bg-yellow-500"
+            : "bg-green-500"
+        }`}
+      >
+        {task.priority || <span className="opacity-50">-</span>}
+      </span>
+
+      {/* Project */}
+      <span className="flex-1 min-w-[100px] text-center">
+        {task.project || <span className="opacity-50">-</span>}
+      </span>
+      <span className="flex-1 min-w-[100px] text-center">
+        {mouseIsOver && (
+          <button
+            className="stroke-white rounded opacity-60 hover:opacity-100"
+            onClick={() => deleteTask(task.id)}
+          >
+            <TrashIcon />
+          </button>
+        )}
+      </span>
+    </div>
+  );
+
+  if (isDragOverlay) {
+    return (
+      <div className="flex items-center px-4 py-2 bg-gray-800 border border-gray-700 rounded-md mb-2 shadow-lg">
+        <div className="flex-1">{taskContent}</div>
+      </div>
+    );
+  }
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="flex items-center px-4 py-2 bg-gray-800 border border-gray-700 rounded-md mb-2 cursor-grab"
+    >
+      <div className="flex-1">{taskContent}</div>
+    </div>
+  );
+};
