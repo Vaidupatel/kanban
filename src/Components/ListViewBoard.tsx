@@ -1,4 +1,3 @@
-import { Id, Section, Task } from "../types";
 import {
   DndContext,
   DragOverEvent,
@@ -7,7 +6,6 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-  closestCenter,
   DragOverlay,
   DropAnimation,
   defaultDropAnimation,
@@ -17,19 +15,27 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useState } from "react";
 import { useKanban } from "../Context/KanbanContext";
 import { ListSectionContainer } from "./SectionContainer";
 import { ListTaskCard } from "./TaskCard";
+import { PlusIcon } from "lucide-react";
 
 const ListViewBoard = (props: { isBoardView: boolean }) => {
   const { isBoardView } = props;
   const KanbanContext = useKanban();
-  const { sections, setSections, setTasks } = KanbanContext;
-
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const [activeSection, setActiveSection] = useState<Section | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<Id>>(new Set());
+  const {
+    sections,
+    setSections,
+    setTasks,
+    expandedSections,
+    setExpandedSections,
+    createSection,
+    activeTask,
+    setActiveTask,
+    activeSection,
+    setActiveSection,
+    sectionsIds,
+  } = KanbanContext;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -42,16 +48,7 @@ const ListViewBoard = (props: { isBoardView: boolean }) => {
     duration: 200,
   };
 
-  const createSection = () => {
-    const newSection: Section = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: `Section ${sections.length + 1}`,
-    };
-    setSections([...sections, newSection]);
-    setExpandedSections(new Set([...expandedSections, newSection.id]));
-  };
-
-  const handleDragStart = (event: DragStartEvent) => {
+  const onDragstart = (event: DragStartEvent) => {
     const { active } = event;
     const activeData = active.data.current;
 
@@ -62,7 +59,7 @@ const ListViewBoard = (props: { isBoardView: boolean }) => {
     }
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
+  const onDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
 
@@ -117,7 +114,7 @@ const ListViewBoard = (props: { isBoardView: boolean }) => {
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (!over) {
@@ -145,14 +142,13 @@ const ListViewBoard = (props: { isBoardView: boolean }) => {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <DndContext
+        onDragStart={onDragstart}
+        onDragEnd={onDragEnd}
+        onDragOver={onDragOver}
         sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={sections.map((s) => s.id)}
+          items={sectionsIds}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-4">
@@ -182,9 +178,9 @@ const ListViewBoard = (props: { isBoardView: boolean }) => {
       </DndContext>
       <button
         onClick={createSection}
-        className="mt-4 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md"
+        className="flex mt-4 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md"
       >
-        + Add section
+        <PlusIcon /> Add section
       </button>
     </div>
   );

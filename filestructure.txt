@@ -1,0 +1,27 @@
+|-- .gitignore
+|-- README.md
+|-- eslint.config.js
+|-- index.html
+|-- package-lock.json
+|-- package.json
+|-- src
+    |-- App.css
+    |-- App.tsx
+    |-- Components
+        |-- KanbanBoard.tsx
+        |-- ListViewBoard.tsx
+        |-- SectionContainer.tsx
+        |-- TaskCard.tsx
+    |-- Context
+        |-- KanbanContext.tsx
+    |-- Icons
+        |-- PlusIcon.tsx
+        |-- TrashIcon.tsx
+    |-- index.css
+    |-- main.tsx
+    |-- types.ts
+    |-- vite-env.d.ts
+|-- tsconfig.app.json
+|-- tsconfig.json
+|-- tsconfig.node.json
+|-- vite.config.ts

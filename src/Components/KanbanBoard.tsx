@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
 import { arrayMove, SortableContext } from "@dnd-kit/sortable";
 import {
+  defaultDropAnimation,
   DndContext,
   DragEndEvent,
   DragOverEvent,
   DragOverlay,
   DragStartEvent,
+  DropAnimation,
   PointerSensor,
   useSensor,
   useSensors,
@@ -13,40 +14,36 @@ import {
 import { createPortal } from "react-dom";
 import PlusIcon from "../Icons/PlusIcon";
 import { useKanban } from "../Context/KanbanContext";
-import { Section, Task } from "../types";
 import { BoardTaskCard } from "./TaskCard";
 import { BoardSectionContainer } from "./SectionContainer";
 
 const KanbanBoard = (props: { isBoardView: boolean }) => {
   const { isBoardView } = props;
   const KanbanContext = useKanban();
-  const { sections, setSections, tasks, setTasks } = KanbanContext;
-
-  const [activeSection, setActiveSection] = useState<Section | null>(null);
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
-
-  const sectionsId = useMemo(() => {
-    return sections.map((sec) => sec.id);
-  }, [sections]);
+  const {
+    sections,
+    setSections,
+    tasks,
+    setTasks,
+    createSection,
+    activeTask,
+    setActiveTask,
+    activeSection,
+    setActiveSection,
+    sectionsIds,
+  } = KanbanContext;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 3, // 3px
+        distance: 3,
       },
     })
   );
 
-  const createNewSection = () => {
-    const sectionToAdd: Section = {
-      id: generateId(),
-      title: `Section ${sections.length + 1}`,
-    };
-    setSections([...sections, sectionToAdd]);
-  };
-
-  const generateId = () => {
-    return Math.floor(Math.random() * 10001);
+  const dropAnimation: DropAnimation = {
+    ...defaultDropAnimation,
+    duration: 200,
   };
 
   const onDragstart = (event: DragStartEvent) => {
@@ -109,10 +106,10 @@ const KanbanBoard = (props: { isBoardView: boolean }) => {
       const activeSectionIndex = sections.findIndex(
         (sec) => sec.id === activeSectionId
       );
-      const overColumnIndex = sections.findIndex(
+      const overSectionIndex = sections.findIndex(
         (sec) => sec.id === overSectionId
       );
-      return arrayMove(sections, activeSectionIndex, overColumnIndex);
+      return arrayMove(sections, activeSectionIndex, overSectionIndex);
     });
   };
 
@@ -120,11 +117,11 @@ const KanbanBoard = (props: { isBoardView: boolean }) => {
     <div className="">
       <div className="w-fit flex mx-auto my-1 gap-1">
         <button
-          onClick={createNewSection}
-          className="h-[60px] w-[350px] min-w-[350px] cursor-pointer bg-[#0D1117] border-2 border-[#161C22] p-4 ring-rose-500 hover:ring-2 flex gap-2"
+          onClick={createSection}
+          className="flex mt-4 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md"
         >
           <PlusIcon />
-          Add Coulmn
+          Add Section
         </button>
       </div>
 
@@ -137,7 +134,7 @@ const KanbanBoard = (props: { isBoardView: boolean }) => {
         >
           <div className={`m-auto flex overflow-x-auto w-screen `}>
             <div className={`flex  flex-row gap-4`}>
-              <SortableContext items={sectionsId}>
+              <SortableContext items={sectionsIds}>
                 {sections.map((section) => (
                   <BoardSectionContainer
                     key={section.id}
@@ -146,13 +143,12 @@ const KanbanBoard = (props: { isBoardView: boolean }) => {
                       (task) => task.sectionId === section.id
                     )}
                   />
-                  // <dragOverlay />
                 ))}
               </SortableContext>
             </div>
           </div>
           {createPortal(
-            <DragOverlay>
+            <DragOverlay dropAnimation={dropAnimation}>
               {activeSection && isBoardView && (
                 <BoardSectionContainer
                   section={activeSection}
@@ -161,7 +157,9 @@ const KanbanBoard = (props: { isBoardView: boolean }) => {
                   )}
                 />
               )}
-              {activeTask && isBoardView && <BoardTaskCard task={activeTask} />}
+              {activeTask && isBoardView && (
+                <BoardTaskCard task={activeTask} isDragOverlay={true} />
+              )}
             </DragOverlay>,
             document.body
           )}

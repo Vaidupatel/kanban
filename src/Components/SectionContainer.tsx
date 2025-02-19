@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Id, Section, Task } from "../types";
@@ -14,12 +14,8 @@ interface Props {
 export const BoardSectionContainer = (props: Props) => {
   const { section, tasks } = props;
   const KanbanContext = useKanban();
-  const { deleteSection, updateSection, createTask } = KanbanContext;
+  const { deleteSection, updateSection, createTask, TasksIds } = KanbanContext;
   const [editMode, setEditMode] = useState(false);
-
-  const TasksIds = useMemo(() => {
-    return tasks.map((task) => task.id);
-  }, [tasks]);
 
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const {
@@ -43,33 +39,38 @@ export const BoardSectionContainer = (props: Props) => {
     transform: CSS.Transform.toString(transform),
   };
 
-  // console.log(style);
-  if (isDragging) {
-    return (
-      <div
-        ref={setNodeRef}
-        // {...attributes}
-        // {...listeners}
-        // style={style}
-
-        className={`bg-[#161C22] min-w-[350px] w-[350px] h-[500px]  rounded-md`}
-      />
-    );
-  }
   return (
     <div
       ref={setNodeRef}
       style={style}
       id={section.id.toString()}
-      {...attributes}
-      {...listeners}
-      data-id={section.id}
-      className={`bg-[#161C22]  min-w-[350px] w-[350px] h-[500px] rounded-md flex flex-col`}
+      className={`border bg-[#101828] ${
+        isDragging ? "opacity-40" : ""
+      } min-w-[350px] w-[350px] h-[500px] rounded-md flex flex-col`}
     >
       {/* section title */}
       <div
-        className={` bg-[#0D1117] text-md h-[60px] cursor-grab rounded-md rounded-b-none p-3 font-bold border-[#161C22] border-4 flex items-center justify-between`}
+        className={`bg-gray-900 text-md h-[60px] rounded-md rounded-b-none p-3 font-bold border-[#161C22] border-4 flex items-center justify-between`}
       >
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab p-1 hover:bg-gray-800 rounded"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 8h16M4 16h16"
+            />
+          </svg>
+        </div>
         <div
           className="flex gap-2"
           ref={nodeRef}
@@ -116,7 +117,7 @@ export const BoardSectionContainer = (props: Props) => {
         onClick={() => {
           createTask(section.id);
         }}
-        className="flex gap-2 items-center border-[#161C22] border-2 rounded-md p-4 border-x-[#161C22] hover:bg-[#0D1117] hover:text-rose-500 active:bg-black"
+        className="w-full p-2 text-left flex  text-gray-400 hover:text-white hover:bg-gray-800 rounded-md"
       >
         <PlusIcon />
         Add task
@@ -147,7 +148,8 @@ export const ListSectionContainer = ({
   });
 
   const KanbanContext = useKanban();
-  const { tasks, updateSection, createTask, deleteSection } = KanbanContext;
+  const { tasks, updateSection, createTask, deleteSection, TasksIds } =
+    KanbanContext;
 
   const [sectionEditMode, setSectionEditMode] = useState(false);
   const nodeRef = useRef<HTMLSpanElement | null>(null);
@@ -176,17 +178,36 @@ export const ListSectionContainer = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`mb-4 border ${isDragging ? "opacity-40" : ""}`}
-      data-section-id={section.id}
+      className={`mb-4 bg-[#101828] border ${isDragging ? "opacity-40" : ""} `}
     >
-      <div className="flex items-center gap-2 p-2 bg-gray-900 rounded-t-md">
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab p-1 hover:bg-gray-800 rounded"
-        >
+      <div className="flex items-center justify-between gap-2 p-2 bg-gray-900 rounded-t-md">
+        <div className="flex items-center gap-2">
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab p-1 hover:bg-gray-800 rounded"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 8h16M4 16h16"
+              />
+            </svg>
+          </div>
           <svg
-            className="w-4 h-4"
+            onClick={(e) => {
+              toggleExpanded(e);
+            }}
+            className={`w-4 h-4 transform transition-transform ${
+              isExpanded ? "rotate-90" : ""
+            }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -195,51 +216,34 @@ export const ListSectionContainer = ({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M4 8h16M4 16h16"
+              d="M9 5l7 7-7 7"
             />
           </svg>
-        </div>
-        <svg
-          onClick={(e) => {
-            toggleExpanded(e);
-          }}
-          className={`w-4 h-4 transform transition-transform ${
-            isExpanded ? "rotate-90" : ""
-          }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-        <span
-          ref={nodeRef}
-          onClick={(e) => {
-            if (e.currentTarget === nodeRef.current) setSectionEditMode(true);
-          }}
-          className="font-medium"
-        >
-          {!sectionEditMode && section.title}
-        </span>
-        {sectionEditMode && (
-          <input
-            className="font-medium"
-            autoFocus
-            value={section.title}
-            onChange={(e) => updateSection(section.id, e.target.value)}
-            onBlur={() => setSectionEditMode(false)}
-            onKeyDown={(e) => {
-              if (e.key !== "Enter") return;
-              setSectionEditMode(false);
+          <span
+            ref={nodeRef}
+            onClick={(e) => {
+              if (e.currentTarget === nodeRef.current) setSectionEditMode(true);
             }}
-          />
-        )}
-        <span className="text-gray-500 text-sm">({sectionTasks.length})</span>
+            className="font-medium"
+          >
+            {!sectionEditMode && section.title}
+          </span>
+          {sectionEditMode && (
+            <input
+              className="font-medium"
+              autoFocus
+              value={section.title}
+              onChange={(e) => updateSection(section.id, e.target.value)}
+              onBlur={() => setSectionEditMode(false)}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return;
+                setSectionEditMode(false);
+              }}
+            />
+          )}
+          <span className="text-gray-500 text-sm">({sectionTasks.length})</span>
+        </div>
+
         <button
           className=" stroke-gray-500 hover:stroke-white hover:bg-[#161C22] rounded px-1 py-2"
           onClick={() => deleteSection(section.id)}
@@ -247,9 +251,10 @@ export const ListSectionContainer = ({
           <TrashIcon />
         </button>
       </div>
+
       {isExpanded && (
         <div className="p-2 bg-gray-900/50 rounded-b-md transition-all duration-200">
-          <SortableContext items={sectionTasks.map((t) => t.id)}>
+          <SortableContext items={TasksIds}>
             <div className="min-h-[40px]">
               {sectionTasks.map((task) => (
                 <ListTaskCard key={task.id} task={task} />
@@ -258,9 +263,9 @@ export const ListSectionContainer = ({
           </SortableContext>
           <button
             onClick={() => createTask(section.id)}
-            className="w-full p-2 text-left text-gray-400 hover:text-white hover:bg-gray-800 rounded-md"
+            className="w-full p-2 text-left flex  text-gray-400 hover:text-white hover:bg-gray-800 rounded-md"
           >
-            + Add task
+            <PlusIcon /> Add task
           </button>
         </div>
       )}
